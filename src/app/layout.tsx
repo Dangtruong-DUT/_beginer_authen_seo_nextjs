@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
     title: "Create Next App",
@@ -23,6 +24,7 @@ export default function RootLayout({
             <body className={`${inter.variable} antialiased`}>
                 <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
                     {children}
+                    <Toaster />
                 </ThemeProvider>
             </body>
         </html>
