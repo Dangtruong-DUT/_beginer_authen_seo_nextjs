@@ -8,18 +8,36 @@ import { Input } from "@/components/ui/input";
 import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema";
 import { envConfig } from "@/config";
 import { toast } from "sonner";
+import { use } from "react";
+import { AppContext } from "@/app/ApppProvider";
 
-// type LoginResponseType = {
-//     status: number;
-//     payload: {
-//         accessToken: string;
-//         user: {
-//             id: string;
-//             email: string;
-//             name: string;
-//         };
-//     };
-// };
+type loginResponseType = {
+    data: {
+        token: string;
+        expiresAt: string;
+        account: {
+            id: string;
+            email: string;
+            name: string;
+        };
+    };
+    message: string;
+};
+
+type loginResponseFromNextServerType = {
+    token: string;
+    expiresAt: string;
+    account: {
+        id: string;
+        email: string;
+        name: string;
+    };
+};
+
+type LoginResponseType<T> = {
+    status: number;
+    payload: T;
+};
 
 type LoginErrorType = {
     status: number;
@@ -29,6 +47,8 @@ type LoginErrorType = {
     };
 };
 function LoginForm() {
+    const { setSessionToken } = use(AppContext);
+
     const form = useForm<LoginBodyType>({
         resolver: zodResolver(LoginBody),
         defaultValues: {
@@ -38,25 +58,45 @@ function LoginForm() {
     });
     const onSubmit = async (values: LoginBodyType) => {
         try {
-            const res = await fetch(envConfig.NEXT_PUBLIC_API_ENDPOINT + "/auth/login", {
+            const responseFromBackend = await fetch(envConfig.NEXT_PUBLIC_API_ENDPOINT + "/auth/login", {
                 body: JSON.stringify(values),
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
             });
-            const payload = await res.json();
-            const data = {
-                status: res.status,
-                payload,
+            const payloadFromBackend: loginResponseType = await responseFromBackend.json();
+            const dataWithStatus: LoginResponseType<loginResponseType> = {
+                status: responseFromBackend.status,
+                payload: payloadFromBackend,
             };
-            if (!res.ok) {
-                throw data;
+            if (!responseFromBackend.ok) {
+                throw dataWithStatus;
             }
-            toast.success(data.payload.message || "Đăng nhập thành công", {
-                description: "Chuyển hướng đến trang chủ sau 2 giây",
+
+            const responseFromNextServer = await fetch("/api/auth", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(dataWithStatus.payload.data),
             });
-            return data;
+
+            const payloadFromNextServer = await responseFromNextServer.json();
+            const dataNextWithStatus: LoginResponseType<loginResponseFromNextServerType> = {
+                status: responseFromNextServer.status,
+                payload: payloadFromNextServer,
+            };
+            if (!responseFromNextServer.ok) {
+                throw dataNextWithStatus;
+            }
+            setSessionToken(dataNextWithStatus.payload.token);
+
+            toast.success(dataWithStatus.payload.message || "Đăng nhập thành công", {
+                description: "Chuyển hướng đến trang chủ sau 2 giây",
+                onDismiss: () => {},
+            });
+            return responseFromNextServer;
         } catch (error) {
             const err = error as LoginErrorType;
             if (err.status === 422) {
@@ -67,7 +107,7 @@ function LoginForm() {
                     });
                 });
             } else {
-                toast.error(err.payload.message || "Đăng nhập thất bại", {});
+                toast.error(err?.payload?.message || "Đăng nhập thất bại", {});
             }
         }
     };

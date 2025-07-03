@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
+import AppProvider from "@/app/ApppProvider";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
     title: "Create Next App",
@@ -14,16 +16,19 @@ const inter = Inter({
     variable: "--font-inter",
 });
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get("sessionToken")?.value || null;
+
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`${inter.variable} antialiased`}>
                 <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-                    {children}
+                    <AppProvider initialSessionToken={sessionToken}>{children}</AppProvider>
                     <Toaster />
                 </ThemeProvider>
             </body>
