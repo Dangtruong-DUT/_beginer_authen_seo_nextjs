@@ -6,9 +6,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RegisterBody, RegisterBodyType } from "@/schemaValidations/auth.schema";
-import { envConfig } from "@/config";
+import authApiRequest from "@/apiRequest/auth.api";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { use } from "react";
+import { AppContext } from "@/app/AppProvider";
 
 function RegisterForm() {
+    const router = useRouter();
+    const { setSessionToken } = use(AppContext);
     const form = useForm<RegisterBodyType>({
         resolver: zodResolver(RegisterBody),
         defaultValues: {
@@ -20,15 +26,14 @@ function RegisterForm() {
     });
     const onSubmit = async (values: RegisterBodyType) => {
         try {
-            const res = await fetch(envConfig.NEXT_PUBLIC_API_ENDPOINT + "/auth/register", {
-                body: JSON.stringify(values),
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+            const res = await authApiRequest.register(values);
+            toast.success(res.payload.message || "Đăng ký thành công");
+            router.push("/me");
+            setSessionToken(res.payload.data.token);
+            await authApiRequest.auth({
+                sessionToken: res.payload.data.token,
             });
-            const data = await res.json();
-            console.log("Registration successful:", data);
+            return res;
         } catch (error) {
             console.error("Error during registration:", error);
         }

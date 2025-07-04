@@ -1,28 +1,16 @@
-import { envConfig } from "@/config";
+import accountApi from "@/apiRequest/account.api";
 import { cookies } from "next/headers";
 
 export async function fetchUserProfile() {
     try {
         const cookieStore = await cookies();
         const sessionToken = cookieStore.get("sessionToken");
-
-        const responseFromBackend = await fetch(envConfig.NEXT_PUBLIC_API_ENDPOINT + "/account/me", {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${sessionToken?.value}`,
-            },
-        });
-        const payloadFromBackend = await responseFromBackend.json();
-        const dataWithStatus = {
-            status: responseFromBackend.status,
-            payload: payloadFromBackend,
-        };
-        if (!responseFromBackend.ok) {
-            throw dataWithStatus;
+        if (!sessionToken?.value) {
+            throw new Error("Session token not found");
         }
+        const response = await accountApi.me(sessionToken.value || "");
 
-        return dataWithStatus;
+        return response;
     } catch (error) {
         console.log("Error fetching user data:", error);
     }

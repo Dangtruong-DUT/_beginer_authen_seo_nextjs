@@ -6,48 +6,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema";
-import { envConfig } from "@/config";
 import { toast } from "sonner";
 import { use } from "react";
-import { AppContext } from "@/app/ApppProvider";
+import { AppContext } from "@/app/AppProvider";
+import authApiRequest from "@/apiRequest/auth.api";
+import { httpError } from "@/lib/http";
+import { useRouter } from "next/navigation";
 
-type loginResponseType = {
-    data: {
-        token: string;
-        expiresAt: string;
-        account: {
-            id: string;
-            email: string;
-            name: string;
-        };
-    };
-    message: string;
-};
-
-type loginResponseFromNextServerType = {
-    token: string;
-    expiresAt: string;
-    account: {
-        id: string;
-        email: string;
-        name: string;
-    };
-};
-
-type LoginResponseType<T> = {
-    status: number;
-    payload: T;
-};
-
-type LoginErrorType = {
-    status: number;
-    payload: {
-        message: string;
-        errors: { field: keyof LoginBodyType; message: string }[];
-    };
-};
 function LoginForm() {
     const { setSessionToken } = use(AppContext);
+    const router = useRouter();
 
     const form = useForm<LoginBodyType>({
         resolver: zodResolver(LoginBody),
@@ -58,49 +26,23 @@ function LoginForm() {
     });
     const onSubmit = async (values: LoginBodyType) => {
         try {
-            const responseFromBackend = await fetch(envConfig.NEXT_PUBLIC_API_ENDPOINT + "/auth/login", {
-                body: JSON.stringify(values),
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-            const payloadFromBackend: loginResponseType = await responseFromBackend.json();
-            const dataWithStatus: LoginResponseType<loginResponseType> = {
-                status: responseFromBackend.status,
-                payload: payloadFromBackend,
-            };
-            if (!responseFromBackend.ok) {
-                throw dataWithStatus;
-            }
-
-            const responseFromNextServer = await fetch("/api/auth", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(dataWithStatus.payload.data),
+            const responseFromBackend = await authApiRequest.login(values);
+            const responseFromNextServer = await authApiRequest.auth({
+                sessionToken: responseFromBackend.payload.data.token,
             });
 
-            const payloadFromNextServer = await responseFromNextServer.json();
-            const dataNextWithStatus: LoginResponseType<loginResponseFromNextServerType> = {
-                status: responseFromNextServer.status,
-                payload: payloadFromNextServer,
-            };
-            if (!responseFromNextServer.ok) {
-                throw dataNextWithStatus;
-            }
-            setSessionToken(dataNextWithStatus.payload.token);
+            setSessionToken(responseFromBackend.payload.data.token);
 
-            toast.success(dataWithStatus.payload.message || "Đăng nhập thành công", {
+            toast.success(responseFromBackend.payload.message || "Đăng nhập thành công", {
                 description: "Chuyển hướng đến trang chủ sau 2 giây",
-                onDismiss: () => {},
             });
+            router.push("/me");
             return responseFromNextServer;
         } catch (error) {
-            const err = error as LoginErrorType;
+            const err = error as httpError;
+            const errors = err.payload.errors as { field: keyof LoginBodyType; message: string }[];
             if (err.status === 422) {
-                err.payload.errors.forEach((error) => {
+                errors.forEach((error) => {
                     form.setError(error.field, {
                         type: "system",
                         message: error.message,

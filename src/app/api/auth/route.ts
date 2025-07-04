@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
     header.set("Content-Type", "application/json");
 
     const req = await request.json();
-    const sessionToken = req?.token;
+    const sessionToken = req?.sessionToken;
     if (!sessionToken) {
         return NextResponse.json({ message: "No session token provided" }, { status: 400, headers: header });
     }
