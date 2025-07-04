@@ -46,81 +46,119 @@ class SessionToken {
 
     set value(value: string | null) {
         if (typeof window == "undefined") {
-            throw new Error("SessionToken can only be set in a browser environment.");
+            throw new Error("Cannot set session token on the server side.");
         }
         this._token = value;
     }
 }
 
-export const sessionToken = SessionToken.getInstance();
+export const clientSessionToken = SessionToken.getInstance();
 
-export const request = async <Response>(
-    method: "GET" | "POST" | "PUT" | "DELETE",
-    url: string,
-    options?: CustomOptionsType
-): Promise<ResponseType<Response>> => {
-    let baseUrl = options?.baseUrl === undefined ? envConfig.NEXT_PUBLIC_API_ENDPOINT : options.baseUrl;
+class Http {
+    private static instance: Http | null = null;
 
-    if (url.startsWith("/")) {
-        url = url.slice(1);
-    }
-    if (!baseUrl.endsWith("/")) {
-        baseUrl += "/";
+    private constructor() {}
+
+    static getInstance(): Http {
+        if (!this.instance) {
+            this.instance = new Http();
+        }
+        return this.instance;
     }
 
-    try {
-        const response = await fetch(`${baseUrl}${url}`, {
-            method,
-            headers: {
-                "Content-Type": "application/json",
-                ...options?.headers,
-            },
-            body: options?.body ? JSON.stringify(options.body) : undefined,
-        });
+    static requestInterceptor(options: CustomOptionsType): CustomOptionsType {
+        if (clientSessionToken.value) {
+            options.headers = {
+                ...options.headers,
+                Authorization: `Bearer ${clientSessionToken.value}`,
+            };
+        }
+        return options;
+    }
 
-        if (!response.ok) {
-            const errorPayload = await response.json();
-            throw new httpError(errorPayload, response.status);
+    static responseInterceptor<Response>(response: ResponseType<Response>, url: string): ResponseType<Response> {
+        const isAuthenticatedEndpoint = ["/auth/login", "/auth/register"].some((fullUrl) => fullUrl.includes(url));
+        if (isAuthenticatedEndpoint && response.status === 200) {
+            clientSessionToken.value = (response as any).payload.data?.token || null;
         }
 
-        const payload: Response = await response.json();
-        return { payload, status: response.status };
-    } catch (error) {
-        if (error instanceof httpError) {
-            throw error;
+        if ("/auth/logout".includes(url) && response.status === 200) {
+            clientSessionToken.value = null;
         }
-        throw new httpError({ message: "An unexpected error occurred." }, 500);
+        return response;
     }
-};
 
-export const http = {
-    get: <Response>(url: string, options?: Omit<CustomOptionsType, "body">): Promise<ResponseType<Response>> => {
-        return request("GET", url, options);
-    },
+    static errorHandler(error: httpError): never {
+        if (error.status === 401) {
+            clientSessionToken.value = null;
+        }
 
-    post: <Response>(
+        throw error;
+    }
+
+    private async rawRequest<Response>(
+        method: "GET" | "POST" | "PUT" | "DELETE",
         url: string,
-        body: any,
-        options?: Omit<CustomOptionsType, "body">
-    ): Promise<ResponseType<Response>> => {
-        return request("POST", url, { ...options, body });
-    },
+        options?: CustomOptionsType
+    ): Promise<ResponseType<Response>> {
+        let baseUrl = options?.baseUrl ?? envConfig.NEXT_PUBLIC_API_ENDPOINT;
 
-    put: <Response>(
+        if (url.startsWith("/")) {
+            url = url.slice(1);
+        }
+        if (!baseUrl.endsWith("/")) {
+            baseUrl += "/";
+        }
+
+        const finalOptions = Http.requestInterceptor(options || {});
+
+        try {
+            const response = await fetch(`${baseUrl}${url}`, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                    ...finalOptions.headers,
+                },
+                body: finalOptions.body ? JSON.stringify(finalOptions.body) : undefined,
+            });
+
+            if (!response.ok) {
+                const errorPayload = await response.json();
+                throw new httpError(errorPayload, response.status);
+            }
+
+            const payload: Response = await response.json();
+            const wrappedResponse: ResponseType<Response> = { payload, status: response.status };
+
+            return Http.responseInterceptor(wrappedResponse, url);
+        } catch (error) {
+            if (error instanceof httpError) {
+                Http.errorHandler(error);
+            }
+            throw new httpError({ message: "An unexpected error occurred." }, 500);
+        }
+    }
+
+    get<Response>(url: string, options?: Omit<CustomOptionsType, "body">): Promise<ResponseType<Response>> {
+        return this.rawRequest<Response>("GET", url, options);
+    }
+
+    post<Response>(url: string, body: any, options?: Omit<CustomOptionsType, "body">): Promise<ResponseType<Response>> {
+        return this.rawRequest<Response>("POST", url, { ...options, body });
+    }
+
+    put<Response>(url: string, body: any, options?: Omit<CustomOptionsType, "body">): Promise<ResponseType<Response>> {
+        return this.rawRequest<Response>("PUT", url, { ...options, body });
+    }
+
+    delete<Response>(
         url: string,
-        body: any,
+        body?: any,
         options?: Omit<CustomOptionsType, "body">
-    ): Promise<ResponseType<Response>> => {
-        return request("PUT", url, { ...options, body });
-    },
+    ): Promise<ResponseType<Response>> {
+        return this.rawRequest<Response>("DELETE", url, { ...options, body });
+    }
+}
 
-    delete: <Response>(
-        url: string,
-        body: any,
-        options?: Omit<CustomOptionsType, "body">
-    ): Promise<ResponseType<Response>> => {
-        return request("DELETE", url, { ...options, body });
-    },
-};
-
+const http = Http.getInstance();
 export default http;

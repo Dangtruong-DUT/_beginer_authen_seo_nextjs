@@ -9,12 +9,9 @@ import { RegisterBody, RegisterBodyType } from "@/schemaValidations/auth.schema"
 import authApiRequest from "@/apiRequest/auth.api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { use } from "react";
-import { AppContext } from "@/app/AppProvider";
 
 function RegisterForm() {
     const router = useRouter();
-    const { setSessionToken } = use(AppContext);
     const form = useForm<RegisterBodyType>({
         resolver: zodResolver(RegisterBody),
         defaultValues: {
@@ -29,7 +26,6 @@ function RegisterForm() {
             const res = await authApiRequest.register(values);
             toast.success(res.payload.message || "Đăng ký thành công");
             router.push("/me");
-            setSessionToken(res.payload.data.token);
             await authApiRequest.auth({
                 sessionToken: res.payload.data.token,
             });

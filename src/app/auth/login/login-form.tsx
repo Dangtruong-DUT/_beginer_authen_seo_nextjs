@@ -7,14 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema";
 import { toast } from "sonner";
-import { use } from "react";
-import { AppContext } from "@/app/AppProvider";
 import authApiRequest from "@/apiRequest/auth.api";
 import { httpError } from "@/lib/http";
 import { useRouter } from "next/navigation";
 
 function LoginForm() {
-    const { setSessionToken } = use(AppContext);
     const router = useRouter();
 
     const form = useForm<LoginBodyType>({
@@ -30,8 +27,6 @@ function LoginForm() {
             const responseFromNextServer = await authApiRequest.auth({
                 sessionToken: responseFromBackend.payload.data.token,
             });
-
-            setSessionToken(responseFromBackend.payload.data.token);
 
             toast.success(responseFromBackend.payload.message || "Đăng nhập thành công", {
                 description: "Chuyển hướng đến trang chủ sau 2 giây",

@@ -1,17 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
-
-type AppContextType = {
-    sessionToken: string | null;
-    setSessionToken: (token: string | null) => void;
-};
-export const AppContext = createContext<AppContextType>({
-    sessionToken: null,
-    setSessionToken: () => {},
-});
-
-export const useAppContext = () => useContext(AppContext);
+import { clientSessionToken } from "@/lib/http";
+import { useState } from "react";
 
 function AppProvider({
     initialSessionToken,
@@ -20,9 +10,13 @@ function AppProvider({
     initialSessionToken: string | null;
     children: React.ReactNode;
 }) {
-    const [sessionToken, setSessionToken] = useState<string | null>(initialSessionToken);
+    useState(() => {
+        if (initialSessionToken && typeof window !== "undefined") {
+            clientSessionToken.value = initialSessionToken;
+        }
+    });
 
-    return <AppContext.Provider value={{ sessionToken, setSessionToken }}>{children}</AppContext.Provider>;
+    return <>{children}</>;
 }
 
 export default AppProvider;
