@@ -104,12 +104,17 @@ class Http {
     }
 
     static responseInterceptor<Response>(response: ResponseType<Response>, url: string): ResponseType<Response> {
-        const isAuthenticatedEndpoint = ["/auth/login", "/auth/register"].some((fullUrl) => fullUrl.includes(url));
+        // If running on the server, return the response directly
+        if (typeof window === "undefined") {
+            return response;
+        }
+
+        const isAuthenticatedEndpoint = ["auth/login", "auth/register"].some((endpoint) => url.includes(endpoint));
         if (isAuthenticatedEndpoint && response.status === 200) {
             clientSessionToken.value = (response as any).payload.data?.token || null;
         }
 
-        if ("/auth/logout".includes(url) && response.status === 200) {
+        if (url.includes("auth/logout") && response.status === 200) {
             clientSessionToken.value = null;
         }
         return response;

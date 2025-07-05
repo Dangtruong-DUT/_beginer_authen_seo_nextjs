@@ -1,4 +1,5 @@
 import accountApi from "@/apiRequest/account.api";
+import Header from "@/components/header";
 import { cookies } from "next/headers";
 
 export async function fetchUserProfile() {
@@ -18,10 +19,10 @@ export async function fetchUserProfile() {
 
 async function UserProfilePage() {
     const userProfile = await fetchUserProfile();
-    console.log("User Profile Data:", userProfile?.payload);
     return (
         <main>
             <header>
+                <Header />
                 <h1 className="text-2xl font-bold">Me Page</h1>
             </header>
 
