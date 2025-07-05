@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema";
 import { toast } from "sonner";
 import authApiRequest from "@/apiRequest/auth.api";
-import { httpError } from "@/lib/http";
 import { useRouter } from "next/navigation";
+import { handleErrorApi } from "@/lib/utils";
 
 function LoginForm() {
     const router = useRouter();
@@ -34,18 +34,7 @@ function LoginForm() {
             router.push("/me");
             return responseFromNextServer;
         } catch (error) {
-            const err = error as httpError;
-            const errors = err.payload.errors as { field: keyof LoginBodyType; message: string }[];
-            if (err.status === 422) {
-                errors.forEach((error) => {
-                    form.setError(error.field, {
-                        type: "system",
-                        message: error.message,
-                    });
-                });
-            } else {
-                toast.error(err?.payload?.message || "Đăng nhập thất bại", {});
-            }
+            handleErrorApi(error, form.setError);
         }
     };
     return (

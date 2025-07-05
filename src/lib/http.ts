@@ -1,18 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { envConfig } from "@/config";
 
-type CustomOptionsType = RequestInit & {
+export type CustomOptionsType = RequestInit & {
     baseUrl?: string;
 };
-type ResponseType<T> = {
+export type ResponseType<T> = {
     payload: T;
     status: number;
 };
 
+export type EntityErrorPayload = {
+    message: string;
+    errors: {
+        field: string;
+        message: string;
+    }[];
+};
+
 export class httpError extends Error {
-    private _status: number;
-    private _payload: any;
-    constructor(payload: any, status: number) {
+    protected _status: number;
+    protected _payload: {
+        message: string;
+        [key: string]: any;
+    };
+    constructor({ payload, status }: { payload: any; status: number }) {
         super("HttpError");
         this._payload = payload;
         this._status = status;
@@ -22,6 +33,22 @@ export class httpError extends Error {
     }
     get payload() {
         return this._payload;
+    }
+}
+
+export const ENTITY_ERROR_STATUS = 422 as const;
+
+export class EntityError extends httpError {
+    constructor({ payload }: { payload: EntityErrorPayload; status: typeof ENTITY_ERROR_STATUS }) {
+        super({ payload, status: ENTITY_ERROR_STATUS });
+    }
+
+    override get status(): 422 {
+        return ENTITY_ERROR_STATUS;
+    }
+
+    override get payload(): EntityErrorPayload {
+        return super.payload as EntityErrorPayload;
     }
 }
 
@@ -88,12 +115,10 @@ class Http {
         return response;
     }
 
-    static errorHandler(error: httpError): never {
+    static errorHandler(error: httpError): void {
         if (error.status === 401) {
             clientSessionToken.value = null;
-        }
-
-        throw error;
+        } else throw error;
     }
 
     private async rawRequest<Response>(
@@ -124,7 +149,11 @@ class Http {
 
             if (!response.ok) {
                 const errorPayload = await response.json();
-                throw new httpError(errorPayload, response.status);
+                if (response.status === ENTITY_ERROR_STATUS) {
+                    throw new EntityError({ payload: errorPayload, status: ENTITY_ERROR_STATUS });
+                } else {
+                    throw new httpError({ payload: errorPayload, status: response.status });
+                }
             }
 
             const payload: Response = await response.json();
@@ -135,7 +164,7 @@ class Http {
             if (error instanceof httpError) {
                 Http.errorHandler(error);
             }
-            throw new httpError({ message: "An unexpected error occurred." }, 500);
+            throw new httpError({ payload: { message: "An unexpected error occurred." }, status: 500 });
         }
     }
 

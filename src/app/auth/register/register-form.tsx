@@ -9,6 +9,7 @@ import { RegisterBody, RegisterBodyType } from "@/schemaValidations/auth.schema"
 import authApiRequest from "@/apiRequest/auth.api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { handleErrorApi } from "@/lib/utils";
 
 function RegisterForm() {
     const router = useRouter();
@@ -31,7 +32,7 @@ function RegisterForm() {
             });
             return res;
         } catch (error) {
-            console.error("Error during registration:", error);
+            handleErrorApi(error, form.setError);
         }
     };
     return (
