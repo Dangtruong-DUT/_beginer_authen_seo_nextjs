@@ -10,7 +10,7 @@ function ButtonLogout() {
     const router = useRouter();
     const handleLogout = async () => {
         try {
-            await authApiRequest.logoutFromNextClientToNextServer();
+            await authApiRequest.logoutFromNextClientToNextServer({ force: true });
             router.push("/");
             toast.success("Logout successful");
         } catch (error) {

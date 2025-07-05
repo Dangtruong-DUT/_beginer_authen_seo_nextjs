@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
     const sessionToken = cookieStore.get("sessionToken")?.value || null;
     const isAuthPath = request.nextUrl.pathname.startsWith("/auth/");
     const isPrivatePath = configPaths.privatePaths.some((path) => request.nextUrl.pathname.startsWith(path));
-    if (sessionToken && isAuthPath) {
+    if (sessionToken && isAuthPath && !request.nextUrl.pathname.includes("/logout")) {
         return NextResponse.redirect(new URL("/", request.url));
     }
 
