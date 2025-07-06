@@ -14,14 +14,20 @@ async function Header() {
                         <li>
                             <Link href="/auth/login">Login</Link>
                         </li>
+
                         <li>
                             <Link href="/auth/register">Register</Link>
                         </li>
                     </>
                 ) : (
-                    <li>
-                        <ButtonLogout />
-                    </li>
+                    <>
+                        <li>
+                            <Link href="/products/add">Add new product</Link>
+                        </li>
+                        <li>
+                            <ButtonLogout />
+                        </li>
+                    </>
                 )}
             </ul>
             <ModeToggle />
