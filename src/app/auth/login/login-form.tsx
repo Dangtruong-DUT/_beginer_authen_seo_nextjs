@@ -26,6 +26,7 @@ function LoginForm() {
             const responseFromBackend = await authApiRequest.login(values);
             const responseFromNextServer = await authApiRequest.auth({
                 sessionToken: responseFromBackend.payload.data.token,
+                expiresAt: responseFromBackend.payload.data.expiresAt,
             });
 
             toast.success(responseFromBackend.payload.message || "Đăng nhập thành công", {

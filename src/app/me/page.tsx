@@ -1,5 +1,5 @@
 import accountApi from "@/apiRequest/account.api";
-import Profile from "@/app/me/profile";
+import ProfileForm from "@/app/me/profile-form";
 import Header from "@/components/header";
 import { cookies } from "next/headers";
 
@@ -28,7 +28,7 @@ async function UserProfilePage() {
                 <h2 className="text-xl  font-bold text-red-400">{userProfile?.payload?.data?.name || "__"}</h2>
             </section>
             <section>
-                <Profile />
+                <ProfileForm />
             </section>
 
             <section className="flex justify-center mt-[1rem]">{/* Add your content here */}</section>

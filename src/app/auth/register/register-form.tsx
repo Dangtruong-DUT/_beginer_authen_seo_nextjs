@@ -29,6 +29,7 @@ function RegisterForm() {
             router.push("/me");
             await authApiRequest.auth({
                 sessionToken: res.payload.data.token,
+                expiresAt: res.payload.data.expiresAt,
             });
             return res;
         } catch (error) {

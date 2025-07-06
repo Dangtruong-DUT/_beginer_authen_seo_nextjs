@@ -3,8 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
-import AppProvider from "@/app/AppProvider";
+import AppProvider from "@/app/app-provider";
 import { cookies } from "next/headers";
+import SlideSession from "@/components/slide-session";
 
 export const metadata: Metadata = {
     title: "Create Next App",
@@ -30,6 +31,7 @@ export default async function RootLayout({
                 <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
                     <AppProvider initialSessionToken={sessionToken}>{children}</AppProvider>
                     <Toaster />
+                    <SlideSession />
                 </ThemeProvider>
             </body>
         </html>

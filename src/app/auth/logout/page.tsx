@@ -15,11 +15,14 @@ function LogoutPage() {
     useEffect(() => {
         const logout = async () => {
             try {
-                await authApiRequest.logoutFromNextClientToNextServer({ force: true });
+                await authApiRequest.logoutFromNextClientToNextServer({ force: false });
                 clientSessionToken.value = null;
                 router.push("/auth/login?redirectFrom=" + pathName);
             } catch (error) {
                 handleErrorApi(error);
+                authApiRequest.logoutFromNextClientToNextServer({ force: true });
+            } finally {
+                router.push("/auth/login?redirectFrom=" + pathName);
             }
         };
         if (sessionToken == clientSessionToken.value) {

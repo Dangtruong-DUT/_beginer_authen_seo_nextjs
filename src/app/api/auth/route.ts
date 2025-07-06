@@ -1,4 +1,3 @@
-import { decodeJwtToken } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 
 export type PayloadJwt = {
@@ -14,16 +13,15 @@ export async function POST(request: NextRequest) {
 
     const req = await request.json();
     const sessionToken = req?.sessionToken;
+    const expiresAt = req?.expiresAt;
     if (!sessionToken) {
         return NextResponse.json({ message: "No session token provided" }, { status: 400, headers: header });
     }
 
-    const jwtPayload = decodeJwtToken<PayloadJwt>(sessionToken);
-
     const res = NextResponse.json(req, { status: 200, headers: header });
     res.cookies.set("sessionToken", sessionToken, {
         httpOnly: true,
-        expires: new Date(jwtPayload.exp * 1000),
+        expires: new Date(expiresAt),
         sameSite: "lax",
         secure: true,
     });
