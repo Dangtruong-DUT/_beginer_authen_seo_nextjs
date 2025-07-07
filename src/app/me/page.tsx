@@ -1,6 +1,5 @@
 import accountApi from "@/apiRequest/account.api";
 import ProfileForm from "@/app/me/profile-form";
-import Header from "@/components/header";
 import { cookies } from "next/headers";
 
 export async function fetchUserProfile() {
@@ -19,7 +18,6 @@ async function UserProfilePage() {
     return (
         <main>
             <header>
-                <Header />
                 <h1 className="text-2xl font-bold">Me Page</h1>
             </header>
 

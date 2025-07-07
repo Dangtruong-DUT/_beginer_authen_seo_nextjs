@@ -25,6 +25,9 @@ async function Header() {
                             <Link href="/products/add">Add new product</Link>
                         </li>
                         <li>
+                            <Link href="/products"> product</Link>
+                        </li>
+                        <li>
                             <ButtonLogout />
                         </li>
                     </>
