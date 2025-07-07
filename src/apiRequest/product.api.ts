@@ -12,5 +12,6 @@ const productApiRequest = {
     uploadImage: (body: FormData) => http.post<{ message: string; data: string }>("/media/upload", body),
     getDetail: (id: string) => http.get<ProductResType>(`/products/${id}`),
     edit: (body: UpdateProductBodyType, id: string) => http.put<ProductResType>(`/products/${id}`, body),
+    delete: (id: string) => http.delete<{ message: string }>(`/products/${id}`),
 };
 export default productApiRequest;

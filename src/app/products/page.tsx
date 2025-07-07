@@ -1,4 +1,5 @@
 import productApiRequest from "@/apiRequest/product.api";
+import DeleteProduct from "@/app/products/_components/button-delete-product";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,7 +11,10 @@ async function ProductPage() {
             <h1 className="text-4xl text-black-50 font-bold">Production List</h1>
             <ul className="grid mt-4 space-y-4 grid-cols-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {payload.data.map((product) => (
-                    <li key={product.id} className="mb-4 p-4 border rounded-lg hover:shadow-lime-50 hover:bg-gray-200 ">
+                    <li
+                        key={product.id}
+                        className="mb-4 p-4 border rounded-lg hover:shadow-lime-50 hover:bg-gray-200 dark:hover:bg-gray-800 transition-all "
+                    >
                         <h2>{product.name}</h2>
                         <p>{product.id}</p>
                         <p>{product.description}</p>
@@ -20,7 +24,7 @@ async function ProductPage() {
                             <Link href={`/products/${product.id}`}>
                                 <Button variant={"secondary"}>Edit</Button>
                             </Link>
-                            <Button variant={"destructive"}>Delete</Button>
+                            <DeleteProduct product={product} />
                         </div>
                     </li>
                 ))}
