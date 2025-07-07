@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import AppProvider from "@/app/app-provider";
 import { cookies } from "next/headers";
 import SlideSession from "@/components/slide-session";
+import Header from "@/components/header";
 
 export const metadata: Metadata = {
     title: "Create Next App",
@@ -29,6 +30,7 @@ export default async function RootLayout({
         <html lang="en" suppressHydrationWarning>
             <body className={`${inter.variable} antialiased`}>
                 <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+                    <Header />
                     <AppProvider initialSessionToken={sessionToken}>{children}</AppProvider>
                     <Toaster />
                     <SlideSession />
