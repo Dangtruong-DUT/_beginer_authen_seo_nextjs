@@ -52,6 +52,7 @@ function ProductForm({ product }: { product?: Product }) {
             }
             const responseFromBackend = await productApiRequest.create(values);
             toast.success(responseFromBackend.payload.message || "Add product successfully");
+            router.push("/products");
             return responseFromBackend;
         } catch (error) {
             handleErrorApi(error, form.setError);
