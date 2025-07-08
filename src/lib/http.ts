@@ -94,6 +94,12 @@ class SessionToken {
 
 export const clientSessionToken = SessionToken.getInstance();
 
+type RequestPropsType = {
+    method: "GET" | "POST" | "PUT" | "DELETE";
+    url: string;
+    options?: CustomOptionsType;
+};
+
 class Http {
     private static instance: Http | null = null;
     private static callStack: { [key: string]: Promise<any> } = {};
@@ -160,18 +166,15 @@ class Http {
         throw error;
     }
 
-    private async rawRequest<Response>(
-        method: "GET" | "POST" | "PUT" | "DELETE",
-        url: string,
-        options?: CustomOptionsType
-    ): Promise<ResponseType<Response>> {
+    private async rawRequest<Response>(props: RequestPropsType): Promise<ResponseType<Response>> {
+        const { method, url, options } = props;
         const key = `${method}:${url}`;
 
         if (Http.callStack[key] !== undefined) {
             return Http.callStack[key];
         }
 
-        const basePromise = this._rawRequest<Response>(method, url, options);
+        const basePromise = this._rawRequest<Response>({ method, url, options });
         Http.callStack[key] = basePromise;
 
         try {
@@ -193,15 +196,16 @@ class Http {
         }
     }
 
-    private async _rawRequest<Response>(
-        method: "GET" | "POST" | "PUT" | "DELETE",
-        url: string,
-        options?: CustomOptionsType
-    ): Promise<ResponseType<Response>> {
+    private async _rawRequest<Response>(props: RequestPropsType): Promise<ResponseType<Response>> {
+        const { method, options } = props;
+        let { url } = props;
+
         let baseUrl = options?.baseUrl ?? envConfig.NEXT_PUBLIC_API_ENDPOINT;
 
         if (url.startsWith("/")) url = url.slice(1);
         if (!baseUrl.endsWith("/")) baseUrl += "/";
+
+        const fullUrl = url.startsWith("http") ? url : `${baseUrl}/${url}`;
 
         let finalOptions = options || {};
         finalOptions = await this.applyRequestInterceptors(finalOptions);
@@ -216,7 +220,7 @@ class Http {
             ...baseHeaders,
             ...(finalOptions.headers as Record<string, string> | undefined),
         };
-        const response = await fetch(`${baseUrl}${url}`, {
+        const response = await fetch(fullUrl, {
             method,
             headers: mergedHeaders,
             body: finalOptions.body instanceof FormData ? finalOptions.body : JSON.stringify(finalOptions.body),
@@ -238,15 +242,15 @@ class Http {
     }
 
     get<Response>(url: string, options?: Omit<CustomOptionsType, "body">): Promise<ResponseType<Response>> {
-        return this.rawRequest<Response>("GET", url, options);
+        return this.rawRequest<Response>({ method: "GET", url, options });
     }
 
     post<Response>(url: string, body: any, options?: Omit<CustomOptionsType, "body">): Promise<ResponseType<Response>> {
-        return this.rawRequest<Response>("POST", url, { ...options, body });
+        return this.rawRequest<Response>({ method: "POST", url, options: { ...options, body } });
     }
 
     put<Response>(url: string, body: any, options?: Omit<CustomOptionsType, "body">): Promise<ResponseType<Response>> {
-        return this.rawRequest<Response>("PUT", url, { ...options, body });
+        return this.rawRequest<Response>({ method: "PUT", url, options: { ...options, body } });
     }
 
     delete<Response>(
@@ -254,7 +258,7 @@ class Http {
         body?: any,
         options?: Omit<CustomOptionsType, "body">
     ): Promise<ResponseType<Response>> {
-        return this.rawRequest<Response>("DELETE", url, { ...options, body });
+        return this.rawRequest<Response>({ method: "DELETE", url, options: { ...options, body } });
     }
 }
 
