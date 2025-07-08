@@ -27,6 +27,7 @@ function RegisterForm() {
             const res = await authApiRequest.register(values);
             toast.success(res.payload.message || "Đăng ký thành công");
             router.push("/me");
+            router.refresh();
             await authApiRequest.auth({
                 sessionToken: res.payload.data.token,
                 expiresAt: res.payload.data.expiresAt,

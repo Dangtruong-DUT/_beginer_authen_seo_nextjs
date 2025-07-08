@@ -17,6 +17,7 @@ function ButtonLogout() {
             await authApiRequest.logoutFromNextClientToNextServer({ force: true });
         } finally {
             router.push("/auth/login");
+            router.refresh();
         }
     };
     return (

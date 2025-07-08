@@ -33,6 +33,8 @@ function LoginForm() {
                 description: "Chuyển hướng đến trang chủ sau 2 giây",
             });
             router.push("/me");
+            router.refresh();
+
             return responseFromNextServer;
         } catch (error) {
             handleErrorApi(error, form.setError);

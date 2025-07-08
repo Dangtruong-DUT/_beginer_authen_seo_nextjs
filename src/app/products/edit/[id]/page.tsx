@@ -1,7 +1,7 @@
 import productApiRequest from "@/apiRequest/product.api";
-import Image from "next/image";
+import ProductForm from "@/app/products/_components/product-form";
 
-async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
+async function UpdateProduct({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     let product = null;
     try {
@@ -10,21 +10,20 @@ async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
     } catch (error) {
         console.error("Failed to fetch product details:", error);
     }
+
     return (
         <div>
             {product ? (
                 <div>
-                    <h1 className="text-4xl text-black-50 font-bold">Product Detail: {product.name}</h1>
-                    <p>ID: {product.id}</p>
-                    <p>Description: {product.description}</p>
-                    <p>Price: ${product.price}</p>
-                    {product.image && <Image src={product.image} alt={product.name} width={100} height={100} />}
+                    <h1 className="text-4xl text-black-50 font-bold">Edit Product: {product.name}</h1>
+                    <ProductForm product={product} />
                 </div>
             ) : (
                 <h1 className="text-4xl text-red-500 font-bold">Product not found</h1>
             )}
+            {/* Display product details or error message */}
         </div>
     );
 }
 
-export default ProductDetail;
+export default UpdateProduct;
