@@ -7,10 +7,16 @@ import {
 } from "@/schemaValidations/product.schema";
 
 const productApiRequest = {
-    getList: () => http.get<ProductListResType>("/products"),
+    getList: () =>
+        http.get<ProductListResType>("/products", {
+            cache: "force-cache",
+        }),
     create: (body: CreateProductBodyType) => http.post<ProductResType>("/products", body),
     uploadImage: (body: FormData) => http.post<{ message: string; data: string }>("/media/upload", body),
-    getDetail: (id: string) => http.get<ProductResType>(`/products/${id}`),
+    getDetail: (id: string) =>
+        http.get<ProductResType>(`/products/${id}`, {
+            cache: "force-cache",
+        }),
     edit: (body: UpdateProductBodyType, id: string) => http.put<ProductResType>(`/products/${id}`, body),
     delete: (id: string) => http.delete<{ message: string }>(`/products/${id}`),
 };

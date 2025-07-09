@@ -1,5 +1,3 @@
-"use client";
-
 import RegisterForm from "@/app/auth/register/register-form";
 
 function RegisterPage() {

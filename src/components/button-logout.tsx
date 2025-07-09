@@ -2,6 +2,7 @@
 
 import authApiRequest from "@/apiRequest/auth.api";
 import { Button } from "@/components/ui/button";
+import { clientSessionToken } from "@/lib/http";
 import { handleErrorApi } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ function ButtonLogout() {
             handleErrorApi(error);
             await authApiRequest.logoutFromNextClientToNextServer({ force: true });
         } finally {
+            clientSessionToken.value = null;
             router.push("/auth/login");
             router.refresh();
         }

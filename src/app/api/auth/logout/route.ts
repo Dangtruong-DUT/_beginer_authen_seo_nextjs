@@ -1,5 +1,6 @@
 import authApiRequest from "@/apiRequest/auth.api";
 import { httpError } from "@/lib/http";
+import { clearSessionCookie } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -27,13 +28,4 @@ export async function POST(request: NextRequest) {
         console.error("Error during logout:", error);
         return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
-}
-
-export function clearSessionCookie(res: NextResponse) {
-    res.cookies.set("sessionToken", "", {
-        httpOnly: true,
-        expires: new Date(0),
-        path: "/",
-    });
-    return res;
 }

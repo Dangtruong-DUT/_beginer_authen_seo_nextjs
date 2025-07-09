@@ -2,18 +2,17 @@ import accountApi from "@/apiRequest/account.api";
 import ProfileForm from "@/app/me/profile-form";
 import { cookies } from "next/headers";
 
-export async function fetchUserProfile() {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken");
-    if (!sessionToken?.value) {
-        throw new Error("Session token not found");
-    }
-    const response = await accountApi.me(sessionToken.value || "");
-
-    return response;
-}
-
 async function UserProfilePage() {
+    async function fetchUserProfile() {
+        const cookieStore = await cookies();
+        const sessionToken = cookieStore.get("sessionToken");
+        if (!sessionToken?.value) {
+            throw new Error("Session token not found");
+        }
+        const response = await accountApi.me(sessionToken.value || "");
+
+        return response;
+    }
     const userProfile = await fetchUserProfile();
     return (
         <main>

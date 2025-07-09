@@ -12,18 +12,17 @@ function SlideSession() {
                 try {
                     if (!clientSessionToken.value) return;
                     const res = await authApiRequest.sliceSessionTokenFromClientToNextServer();
-                    clientSessionToken.expiresAt = res.payload.data.expiresAt;
-                    clientSessionToken.expiresAt = res.payload.data.token;
+                    const { expiresAt, token } = res.payload.data;
+                    clientSessionToken.expiresAt = expiresAt;
+                    clientSessionToken.expiresAt = token;
                 } catch (error) {
                     console.error("Error sliding session:", error);
                 }
             };
             const now = new Date();
-            const expiresAt = new Date(clientSessionToken.expiresAt);
+            const expiresAt =
+                clientSessionToken.expiresAt != null ? new Date(clientSessionToken.expiresAt) : new Date();
             if (differenceInHours(now, expiresAt) < 1) {
-                console.log("Sliding session token");
-                console.log("now time", now.toISOString());
-                console.log("expiresAt time", expiresAt.toISOString());
                 SlideSession();
             }
         }, 1000 * 60 * 30);

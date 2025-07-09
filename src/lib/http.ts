@@ -2,6 +2,8 @@
 import { envConfig } from "@/config";
 import { redirect } from "next/navigation";
 
+const isClient = typeof window !== "undefined";
+
 export const httpStatus = {
     ENTITY_ERROR_STATUS: 422,
     UNAUTHORIZED_STATUS: 401,
@@ -56,12 +58,15 @@ export class EntityError extends httpError {
 }
 
 class SessionToken {
-    private _token: string | null;
-    private _expiresAt: string = new Date().toISOString();
+    private _token: string | null = null;
+    private _expiresAt: string | null = null;
     private static instance: SessionToken | null = null;
 
-    private constructor(token: string | null = null) {
-        this._token = token;
+    private constructor() {
+        if (isClient) {
+            this._token = localStorage.getItem("sessionToken");
+            this._expiresAt = localStorage.getItem("sessionTokenExpiresAt");
+        }
     }
 
     static getInstance(): SessionToken {
@@ -76,17 +81,29 @@ class SessionToken {
     }
 
     set value(value: string | null) {
-        if (typeof window == "undefined") {
+        if (!isClient) {
             throw new Error("Cannot set session token on the server side.");
+        }
+        if (value === null) {
+            localStorage.removeItem("sessionToken");
+            localStorage.removeItem("sessionTokenExpiresAt");
+        } else {
+            localStorage.setItem("sessionToken", value);
         }
         this._token = value;
     }
     get expiresAt() {
         return this._expiresAt;
     }
-    set expiresAt(value: string) {
-        if (typeof window == "undefined") {
+    set expiresAt(value: string | null) {
+        if (!isClient) {
             throw new Error("Cannot set session token expiration on the server side.");
+        }
+        if (value === null) {
+            localStorage.removeItem("sessionTokenExpiresAt");
+            localStorage.removeItem("sessionToken");
+        } else {
+            localStorage.setItem("sessionTokenExpiresAt", value);
         }
         this._expiresAt = value;
     }
@@ -210,6 +227,8 @@ class Http {
         let finalOptions = options || {};
         finalOptions = await this.applyRequestInterceptors(finalOptions);
 
+        const body = finalOptions.body instanceof FormData ? finalOptions.body : JSON.stringify(finalOptions.body);
+
         const baseHeaders: Record<string, string> =
             finalOptions.body instanceof FormData
                 ? {}
@@ -223,7 +242,7 @@ class Http {
         const response = await fetch(fullUrl, {
             method,
             headers: mergedHeaders,
-            body: finalOptions.body instanceof FormData ? finalOptions.body : JSON.stringify(finalOptions.body),
+            body,
         });
 
         if (!response.ok) {
@@ -289,12 +308,13 @@ http.useResponse((response, url) => {
 
     const isAuth = ["auth/login", "auth/register"].some((endpoint) => url.includes(endpoint));
     if (isAuth && response.status === 200) {
-        clientSessionToken.value = (response as any).payload.data?.token || null;
-        clientSessionToken.expiresAt = (response as any).payload.data?.expiresAt || new Date().toISOString();
+        const { token, expiresAt } = (response as any).payload.data;
+        clientSessionToken.value = token || null;
+        clientSessionToken.expiresAt = expiresAt || null;
     }
     if (url.includes("auth/logout") && response.status === 200) {
         clientSessionToken.value = null;
-        clientSessionToken.expiresAt = new Date().toISOString();
+        clientSessionToken.expiresAt = null;
     }
     return response;
 });

@@ -1,17 +1,11 @@
-import productApiRequest from "@/apiRequest/product.api";
 import ProductForm from "@/app/products/_components/product-form";
+import { getPost } from "@/lib/data";
 import { Metadata } from "next";
-import { cache } from "react";
 
 type Props = {
     params: Promise<{ id: string }>;
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
-
-export const getPost = cache(async (id: string) => {
-    const res = await productApiRequest.getDetail(id);
-    return res;
-});
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { id } = await params;
