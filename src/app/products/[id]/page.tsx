@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import productApiRequest from "@/apiRequest/product.api";
 import Image from "next/image";
 import { cache } from "react";
+import { envConfig } from "@/config";
+import { baseOpenGraph } from "@/app/shared-metadata";
 
 type Props = {
     params: Promise<{ id: string }>;
@@ -15,7 +17,7 @@ export const getPost = cache(async (id: string) => {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { id } = await params;
-
+    const url = envConfig.NEXT_PUBLIC_API + "/products/" + id;
     let product = null;
     try {
         const { payload } = await getPost(id);
@@ -26,6 +28,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
         title: product?.name || "Product Detail",
         description: product ? product.description : "Product not found",
+        alternates: {
+            canonical: url,
+            languages: {
+                "en-US": "/en-US",
+                "de-DE": "/de-DE",
+            },
+        },
+        openGraph: {
+            ...baseOpenGraph,
+            title: product?.name || "Product Detail",
+            description: product ? product.description : "Product not found",
+            url,
+            siteName: "productic company",
+            images: [
+                {
+                    url: product?.image || "http://localhost:400/heheh", // Must be an absolute URL
+                    width: 800,
+                    height: 600,
+                },
+            ],
+        },
     };
 }
 
