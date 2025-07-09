@@ -167,7 +167,8 @@ class Http {
 
     static async errorHandler(error: httpError, options: CustomOptionsType) {
         if (error.status === httpStatus.UNAUTHORIZED_STATUS) {
-            if (typeof window !== "undefined") {
+            console.log(error);
+            if (isClient) {
                 await fetch("/api/auth/logout", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -304,7 +305,7 @@ http.useRequest((options) => {
 });
 
 http.useResponse((response, url) => {
-    if (typeof window === "undefined") return response;
+    if (!isClient) return response;
 
     const isAuth = ["auth/login", "auth/register"].some((endpoint) => url.includes(endpoint));
     if (isAuth && response.status === 200) {

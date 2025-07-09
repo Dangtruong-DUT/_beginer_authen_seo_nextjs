@@ -1,15 +1,23 @@
+"use client";
 import ButtonLogout from "@/components/button-logout";
 import { ModeToggle } from "@/components/mode-toggle";
-import { cookies } from "next/headers";
+import { clientSessionToken } from "@/lib/http";
 import Link from "next/link";
+import { useEffect } from "react";
 
-async function Header() {
-    const cookieStorage = await cookies();
-    const sessionToken = cookieStorage.get("sessionToken")?.value || null;
+function Header() {
+    let isAuthenticated = false;
+    useEffect(() => {
+        if (clientSessionToken.value) {
+            isAuthenticated = true;
+        } else {
+            isAuthenticated = false;
+        }
+    }, []);
     return (
         <div className="flex justify-between p-[1rem] p-x[5rem] ">
             <ul className="flex gap-[2rem]">
-                {sessionToken == null ? (
+                {isAuthenticated ? (
                     <>
                         <li>
                             <Link href="/auth/login">Login</Link>
