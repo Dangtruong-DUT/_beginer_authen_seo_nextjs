@@ -9,7 +9,10 @@ import SlideSession from "@/components/slide-session";
 import Header from "@/components/header";
 
 export const metadata: Metadata = {
-    title: "web-restaurant",
+    title: {
+        template: "%s | Products",
+        default: "web-restaurant",
+    },
     description: "A restaurant management web application built with Next.js",
 };
 

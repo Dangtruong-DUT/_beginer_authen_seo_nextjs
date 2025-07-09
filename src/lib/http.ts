@@ -29,8 +29,8 @@ export class httpError extends Error {
         message: string;
         [key: string]: any;
     };
-    constructor({ payload, status }: { payload: any; status: number }) {
-        super("HttpError");
+    constructor({ payload, status, message = "Http Error" }: { payload: any; status: number; message?: string }) {
+        super(message);
         this._payload = payload;
         this._status = status;
     }
@@ -205,7 +205,7 @@ class Http {
         if (url.startsWith("/")) url = url.slice(1);
         if (!baseUrl.endsWith("/")) baseUrl += "/";
 
-        const fullUrl = url.startsWith("http") ? url : `${baseUrl}/${url}`;
+        const fullUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
 
         let finalOptions = options || {};
         finalOptions = await this.applyRequestInterceptors(finalOptions);
@@ -229,9 +229,16 @@ class Http {
         if (!response.ok) {
             const errorPayload = await response.json();
             if (response.status === httpStatus.ENTITY_ERROR_STATUS) {
-                throw new EntityError({ payload: errorPayload, status: httpStatus.ENTITY_ERROR_STATUS });
+                throw new EntityError({
+                    payload: errorPayload,
+                    status: httpStatus.ENTITY_ERROR_STATUS,
+                });
             } else {
-                throw new httpError({ payload: errorPayload, status: response.status });
+                throw new httpError({
+                    payload: errorPayload,
+                    status: response.status,
+                    message: errorPayload.message || "Request failed",
+                });
             }
         }
 

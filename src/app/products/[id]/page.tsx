@@ -1,11 +1,39 @@
+import type { Metadata } from "next";
 import productApiRequest from "@/apiRequest/product.api";
 import Image from "next/image";
+import { cache } from "react";
 
-async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
+type Props = {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export const getPost = cache(async (id: string) => {
+    const res = await productApiRequest.getDetail(id);
+    return res;
+});
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+    const { id } = await params;
+
+    let product = null;
+    try {
+        const { payload } = await getPost(id);
+        product = payload.data;
+    } catch (error) {
+        console.error("Failed to fetch product details:", error);
+    }
+    return {
+        title: product?.name || "Product Detail",
+        description: product ? product.description : "Product not found",
+    };
+}
+
+async function ProductDetail({ params }: Props) {
     const { id } = await params;
     let product = null;
     try {
-        const { payload } = await productApiRequest.getDetail(id);
+        const { payload } = await getPost(id);
         product = payload.data;
     } catch (error) {
         console.error("Failed to fetch product details:", error);

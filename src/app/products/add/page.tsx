@@ -1,4 +1,10 @@
 import ProductForm from "@/app/products/_components/product-form";
+import { Metadata } from "next";
+export const metadata: Metadata = {
+    title: "Add New Product",
+
+    description: "Create a new product by filling out the form below.",
+};
 
 function AddProductPage() {
     return (

@@ -1,21 +1,30 @@
 import productApiRequest from "@/apiRequest/product.api";
 import DeleteProduct from "@/app/products/_components/button-delete-product";
 import { Button } from "@/components/ui/button";
+import { ProductListResType } from "@/schemaValidations/product.schema";
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-    title: "Menu",
+    title: "portfolio",
 };
 
 async function ProductPage() {
-    const { payload } = await productApiRequest.getList();
+    let products: ProductListResType["data"] | null = null;
+    try {
+        const { payload } = await productApiRequest.getList();
+        products = payload.data;
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        return <div>Error loading products.</div>;
+    }
+
     return (
         <div>
             <h1 className="text-4xl text-black-50 font-bold">Production List</h1>
-            <ul className="grid mt-4 space-y-4 grid-cols-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {payload.data.map((product) => (
+            <ul className="grid mt-4 space-y-4 grid-cols-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {products.map((product) => (
                     <li
                         key={product.id}
                         className="mb-4 p-4 border rounded-lg hover:shadow-lime-50 hover:bg-gray-200 dark:hover:bg-gray-800 transition-all "
